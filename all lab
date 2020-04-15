@@ -1,0 +1,98 @@
+#define MOTOR_D1_PIN 7
+#define MOTOR_D2_PIN 8
+#define MOTOR_PWM_PIN 6
+int setpoint=0;
+volatile long count = 0;
+float velo=0;
+float z;
+int zet=0;
+int zets=0;
+int v=1;
+void moveForward (int speed) 
+{
+  digitalWrite(MOTOR_D1_PIN,HIGH);
+  digitalWrite(MOTOR_D2_PIN,LOW);
+  analogWrite(MOTOR_PWM_PIN,speed);
+}
+
+void moveBackward (int speed) 
+{
+  digitalWrite(MOTOR_D1_PIN,LOW);
+  digitalWrite(MOTOR_D2_PIN,HIGH);
+  analogWrite(MOTOR_PWM_PIN,speed);
+}
+void setSpeed (int speed)
+{
+  if (speed>0)
+  {
+    if(speed>255)
+    {speed=255;}
+    moveForward(speed);
+  }
+ else if (speed<0)
+ {
+   speed=speed*(-1);
+   if (speed>255)
+   {speed=255;}
+   moveBackward(speed);
+ }
+ else
+ {
+   moveForward(1);
+ }
+}
+void setup()
+{ pinMode(10,OUTPUT);
+  pinMode(MOTOR_D1_PIN,OUTPUT);
+  pinMode(MOTOR_D2_PIN,OUTPUT);
+  pinMode(MOTOR_PWM_PIN,OUTPUT);
+  pinMode(A0,INPUT);
+  Serial.begin(9600);
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+  pinMode(11, INPUT_PULLUP); 
+  pinMode(12, INPUT_PULLUP);
+  Serial.begin(9600);
+  attachInterrupt(digitalPinToInterrupt(2), countIt, RISING);
+  
+}
+void loop()
+{ 
+  velo = count; 
+  z += (setpoint - velo);
+  float i = (z*0.5);
+  float p = (setpoint - velo)*0.01;
+  Serial.println(velo);
+  setSpeed(p+i);
+  Serial.print(setpoint);
+  Serial.print(",");
+  count = 0;
+  delay(500);
+  zet= digitalRead(11);
+  zets= digitalRead(12);
+  if(zets==0){if(setpoint>0){
+    setpoint=setpoint*-1;}}
+  if(zet==0){if(setpoint<0){
+    setpoint=setpoint*-1;}}
+  if (v>0){
+  digitalWrite(10,HIGH);
+  v=-1;}
+  else{
+  digitalWrite(10,LOW);
+  v=1;}}
+void serialEvent() 
+{ if(Serial.read()!='s')
+{return ;}
+ else
+{int set = Serial.parseInt();
+if(set>=-100&&set<=100)
+{setpoint = set;}
+else
+{return;}
+}
+z=0;}
+void countIt() 
+  
+{count += digitalRead(3) ? -1 : 1;}
+
+
